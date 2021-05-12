@@ -1,0 +1,27 @@
+@use "sass:math";
+
+$background-color: rgb(241, 241, 241);
+
+$nav-background-color: transparent;
+
+$hero-background-color: rgb(255, 87, 87);
+$about-background-color: rgb(87, 126, 255);
+$hero-content-background-color: rgb(241, 241, 241);
+
+
+$padding-horizontal: 144px;
+
+$num-sections: 6;
+$rotation-angle: 2 * math.$pi / $num-sections * 1rad;
+$internal-radius: 100vw / (2 * math.sin($rotation-angle / 2));
+$circle-center-y: -(100vw / (2 * math.tan($rotation-angle / 2)));
+$circle-center-x: 50vw;
+
+@function offset-x($i) {
+    @return $circle-center-x + $internal-radius * math.cos((-1.5 + $i) * $rotation-angle - math.$pi / 2);
+};
+
+@function offset-y($i) {
+    @return $circle-center-y - $internal-radius * math.sin((-1.5 + $i) * $rotation-angle - math.$pi / 2);
+};
+

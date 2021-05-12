@@ -1,0 +1,50 @@
+@use 'variables';
+@use 'section';
+
+#hero-section {
+
+    @include section.set-droplet-color(variables.$hero-background-color);
+
+    #content-container {
+        height: 100%;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        box-sizing: border-box;
+        padding: 0px variables.$padding-horizontal;
+
+        background-color: variables.$hero-content-background-color;
+
+        #content {
+            display: block;
+        
+            width: 40%;
+        
+            font-size: 1rem;
+        
+            #greeting {
+                font-size: 1.5em;
+                font-family: 'Montserrat', sans-serif;
+            }
+        
+            #name-container {
+                font-size: 4em;
+                font-family: 'Montserrat', sans-serif;
+        
+                #name {
+                    font-weight: 600;
+                }
+            }
+        
+            #subtitle {
+                font-size: 1.2em;
+                font-family: 'Montserrat', sans-serif;
+                margin-top: 1em;
+                text-align: justify;
+            }
+        }
+    }
+}

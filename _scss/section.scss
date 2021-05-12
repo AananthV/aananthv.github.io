@@ -1,0 +1,74 @@
+@use 'variables';
+
+%droplet {
+    display: block;
+    position: absolute;
+    content: "";
+
+    height: 100vh;
+    width: 100vw;
+}
+
+#sections {
+    height: 100%;
+    width: variables.$num-sections * 100vw;
+
+    display: flex;
+
+    .section {
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+
+        &:before {
+            @extend %droplet;
+    
+            transform: translateY(-99.9%);
+    
+            clip-path: url(#beforeClip);
+        }
+    
+        &:after {
+            @extend %droplet;
+    
+            transform: translate(99.9%, -100%);
+    
+            clip-path: url(#afterClip);
+        }
+    
+        .clipped {
+            @extend %droplet;
+    
+            top: 0;
+            left: 0;
+    
+            clip-path: url(#avatarClip);
+        }
+    }
+
+    @for $i from 1 through variables.$num-sections {
+        .section:nth-child(#{$i}) {
+            transform-origin: top left;
+            left: variables.offset-x($i);
+            top: variables.offset-y($i);
+            transform: rotate(-($i - 1) * variables.$rotation-angle);
+        }
+    }
+
+    transform-origin: variables.$circle-center-x variables.$circle-center-y;
+
+    // animation: rot 5s;
+
+    // transform: scale(0.5) translateY(2000px);
+}
+
+@keyframes rot {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}
+
+@mixin set-droplet-color($color) {
+    &:before, &:after, .clipped {
+        background-color: $color;
+    }
+}
