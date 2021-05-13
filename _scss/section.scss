@@ -57,6 +57,8 @@
 
     transform-origin: variables.$circle-center-x variables.$circle-center-y;
 
+    transition: transform variables.$section-rotation-time ease-in-out;
+
     // animation: rot 5s;
 
     // transform: scale(0.5) translateY(2000px);

@@ -16,6 +16,7 @@ $rotation-angle: 2 * math.$pi / $num-sections * 1rad;
 $internal-radius: 100vw / (2 * math.sin($rotation-angle / 2));
 $circle-center-y: -(100vw / (2 * math.tan($rotation-angle / 2)));
 $circle-center-x: 50vw;
+$section-rotation-time: 1s;
 
 @function offset-x($i) {
     @return $circle-center-x + $internal-radius * math.cos((-1.5 + $i) * $rotation-angle - math.$pi / 2);
@@ -24,4 +25,3 @@ $circle-center-x: 50vw;
 @function offset-y($i) {
     @return $circle-center-y - $internal-radius * math.sin((-1.5 + $i) * $rotation-angle - math.$pi / 2);
 };
-
