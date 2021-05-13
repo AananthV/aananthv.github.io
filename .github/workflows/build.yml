@@ -26,15 +26,21 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: gh-pages
-          fetch-depth: 1
-      - name: Move compiled CSS to path within pr-pages branch
-        run: mv /tmp/repo-name/assets/css css/
+
+      - name: Cherry-Pick latest commit in main
+        run: git cherry-pick main
+      
+      - name: Remove old css files in gh-pages branch
+        run: rm -rf css
+
+      - name: Move compiled CSS to path within gh-pages branch
+        run: mv /tmp/repo-name/assets/css css
 
       - name: Add and Commit changes to gh-pages branch
         run: |
           git config --local user.email 'action@github.com'
           git config --local user.name 'GitHub Action'
-          git add -f css/*
+          git add -f .
           git commit -m 'Updates compiled CSS files'
 
       - name: Push changes
