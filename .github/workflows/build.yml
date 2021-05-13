@@ -27,7 +27,7 @@ jobs:
         with:
           ref: gh-pages
 
-      - name: Cherry-Pick latest commit in main
+      - name: Cherry-pick the latest commit from maingi
         run: git cherry-pick main
       
       - name: Remove old css files in gh-pages branch
