@@ -23,12 +23,15 @@ jobs:
           destination: /tmp/repo-name/assets/css/style.css
 
       - name: Checkout destination Git branch
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
+        run: git checkout -b gh-pages
 
-      - name: Cherry-pick the latest commit from main
-        run: git fetch origin main && git cherry-pick main
+      # - name: Checkout destination Git branch
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ref: gh-pages
+
+      # - name: Cherry-pick the latest commit from main
+      #   run: git fetch origin main && git cherry-pick origin main
       
       - name: Remove old css files in gh-pages branch
         run: rm -rf css
