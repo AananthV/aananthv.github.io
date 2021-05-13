@@ -1,9 +1,9 @@
-@use 'variables';
-@use 'section';
+@use '../variables';
+@use '../section';
 
-#about-section {
+#skills-section {
 
-    @include section.set-droplet-color(variables.$about-background-color);
+    @include section.set-droplet-color(variables.$skills-background-color);
 
     #content-container {
         height: 100%;

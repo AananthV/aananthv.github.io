@@ -6,12 +6,16 @@ $nav-background-color: transparent;
 
 $hero-background-color: rgb(255, 87, 87);
 $about-background-color: rgb(87, 126, 255);
+$experience-background-color: rgb(255, 87, 143);
+$skills-background-color: rgb(138, 241, 78);
+$contact-background-color: rgb(255, 163, 87);
+
 $hero-content-background-color: rgb(242, 242, 242);
 
 
 $padding-horizontal: 144px;
 
-$num-sections: 6;
+$num-sections: 5;
 $rotation-angle: 2 * math.$pi / $num-sections * 1rad;
 $internal-radius: 100vw / (2 * math.sin($rotation-angle / 2));
 $circle-center-y: -(100vw / (2 * math.tan($rotation-angle / 2)));

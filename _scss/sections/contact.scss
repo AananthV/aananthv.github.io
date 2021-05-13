@@ -1,9 +1,9 @@
-@use 'variables';
-@use 'section';
+@use '../variables';
+@use '../section';
 
-#hero-section {
+#contact-section {
 
-    @include section.set-droplet-color(variables.$hero-background-color);
+    @include section.set-droplet-color(variables.$contact-background-color);
 
     #content-container {
         height: 100%;

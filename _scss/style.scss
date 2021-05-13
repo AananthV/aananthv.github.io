@@ -1,8 +1,11 @@
 @use 'variables';
 @use 'nav';
 @use 'section';
-@use 'hero';
-@use 'about';
+@use 'sections/hero';
+@use 'sections/about';
+@use 'sections/contact';
+@use 'sections/experience';
+@use 'sections/skills';
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
