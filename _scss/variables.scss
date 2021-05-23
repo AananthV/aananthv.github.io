@@ -1,6 +1,6 @@
 @use "sass:math";
 
-$background-color: rgb(242, 242, 242);
+$background-color: rgb(241, 241, 241);
 
 $nav-background-color: transparent;
 
@@ -10,7 +10,7 @@ $experience-background-color: rgb(255, 87, 143);
 $skills-background-color: rgb(138, 241, 78);
 $contact-background-color: rgb(255, 163, 87);
 
-$hero-content-background-color: rgb(242, 242, 242);
+$hero-content-background-color: $background-color;
 
 
 $padding-horizontal: 144px;
