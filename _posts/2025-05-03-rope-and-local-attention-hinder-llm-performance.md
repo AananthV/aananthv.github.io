@@ -17,9 +17,9 @@ When given a list of questions, the model gets the last question correct **twice
 
 Note: I ran these experiments using `gemma-2-2b-it` due to hardware limitations. Please try to run them on bigger models if you have the resources - I would love to see the results :)
 
-<details>
+<details markdown="1">
 
-<summary> Example Prompt </summary>
+<summary markdown="span"> Example Prompt </summary>
 
 <blockquote>
 Read the following multiple choice questions and answer them one by one. Your answer for each question should be in following format: <question_number>. <the index of the correct option (1, 2, 3, or 4)>
@@ -45,9 +45,9 @@ Here are the answers to the multiple-choice questions, one index per line:
 
 </details>
 
-<details>
+<details markdown="1">
 
-<summary>Pseudocode</summary>
+<summary markdown="span">Pseudocode</summary>
 
 The evaluation loop is fairly straightforward:
 
