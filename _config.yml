@@ -1,0 +1,21 @@
+# Site settings
+title: Aananth's Blog
+email: aananthv@github.io
+description: >- # this means to ignore newlines until "baseurl:"
+  Welcome to my personal blog. Here I share my thoughts, projects, and experiences
+  working with technology, code, and everything in between.
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "https://aananthv.github.io" # the base hostname & protocol for your site
+
+# Social media links (Minima theme footer shows these automatically)
+twitter_username: aananth_
+github_username: aananthv
+linkedin_username: aananthv
+
+# Build settings
+theme: minima
+
+# Plugins configuration
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
