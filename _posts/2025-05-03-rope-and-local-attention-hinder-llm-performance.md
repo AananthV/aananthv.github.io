@@ -17,37 +17,30 @@ When given a list of questions, the model gets the last question correct **twice
 
 Note: I ran these experiments using `gemma-2-2b-it` due to hardware limitations. Please try to run them on bigger models if you have the resources - I would love to see the results :)
 
-<details markdown="1">
+### Example Prompt
 
-<summary markdown="span"> Example Prompt </summary>
+> Read the following multiple choice questions and answer them one by one. Your answer for each question should be in following format: <question_number>. <the index of the correct option (1, 2, 3, or 4)>
+> 
+> 1.	Question: A family therapist using the structural approach of Salvador Minuchin would most likely:  
+> 	Choices:  
+> 		1. clarify boundaries between family members in order to reduce enmeshment.  
+> 		2. work initially with the most differentiated family member.  
+> 		3. "use a multiple-therapist team to prevent any one therapist from becoming ""triangulated"" into the family system."  
+> 		4. "issue specific ""directives"" designed to counteract dysfunctional processes."  
+> 
+> 2.	Question: Which of these countries was not a member of the Axis alliance during World War II?  
+> 	Choices:  
+> 		1. Germany  
+> 		2. Italy  
+> 		3. Spain  
+> 		4. Japan  
+> 
+> (..the other questions, in a similar format)
+> 
+> Here are the answers to the multiple-choice questions, one index per line:
 
-<blockquote>
-Read the following multiple choice questions and answer them one by one. Your answer for each question should be in following format: <question_number>. <the index of the correct option (1, 2, 3, or 4)>
 
-1.	Question: A family therapist using the structural approach of Salvador Minuchin would most likely:  
-	Choices:  
-		1. clarify boundaries between family members in order to reduce enmeshment.  
-		2. work initially with the most differentiated family member.  
-		3. "use a multiple-therapist team to prevent any one therapist from becoming ""triangulated"" into the family system."  
-		4. "issue specific ""directives"" designed to counteract dysfunctional processes."  
-
-2.	Question: Which of these countries was not a member of the Axis alliance during World War II?  
-	Choices:  
-		1. Germany  
-		2. Italy  
-		3. Spain  
-		4. Japan  
-
-(..the other questions, in a similar format)
-
-Here are the answers to the multiple-choice questions, one index per line:
-</blockquote>
-
-</details>
-
-<details markdown="1">
-
-<summary markdown="span">Pseudocode</summary>
+### Pseudocode
 
 The evaluation loop is fairly straightforward:
 
@@ -72,7 +65,7 @@ for i in 1..N_iters:
     # scores[i] += 1 if is_correct[i]
     update_scores(scores, is_correct)
 ```
-</details>
+
 
 ### Why might this be happening?
 
