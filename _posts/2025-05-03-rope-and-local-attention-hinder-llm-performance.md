@@ -11,7 +11,7 @@ The `gemma-2-2b-it` model achieves a 56% score (5-shot)[^gemma2] on the MMLU. **
 
 However, this is not what we see!
 
-![correct answers in batch of 50](images/rope/50.webp)
+![correct answers in batch of 50]({{ site.baseurl }}/images/rope/50.webp)
 
 When given a list of questions, the model gets the last question correct **twice as often as the first question**. The first few questions are pretty much guessed correctly with a random chance (25%).
 
@@ -82,13 +82,13 @@ I believe that there are two _optimizations_ here that are bottlenecking LLM per
 
 Standard self-attention is powerful, letting every token "attend" to every other token in the context. However, this global view becomes computationally expensive (O(n^2)) as context length grows. Enter Local Attention[^longformer]. It's an efficiency optimization technique. Instead of looking everywhere, each token only attends to a fixed-size window of its neighboring tokens. For decoder-only transformers like current LLMs, each token attends to a fixed-size window of preceeding tokens. This drastically reduces the computational cost (O(n)) and memory required, especially for long documents.
 
-![sliding window attention](images/rope/sliding-window-1.webp)
+![sliding window attention]({{ site.baseurl }}/images/rope/sliding-window-1.webp)
 
 Gemma2 alternates between a 4096-token sliding window local attention layer and a global attention layer (8192 tokens, since that is the full context window). This interleaving allows the model to attend to the global state while being slightly computationally efficient.
 
 This means that Gemma2 should be able to answer all the questions within the 4096-token window with the same accuracy. This seems to hold for the most part - when batches of <20 questions are supplied, Gemma2 answers each question correctly with roughly the same probability.
 
-![correct answers in batches of 10 to 50](images/rope/10-50-2.webp)
+![correct answers in batches of 10 to 50]({{ site.baseurl }}/images/rope/10-50-2.webp)
 
 However, I would imagine the graph to look more like a [step-function](https://en.wikipedia.org/wiki/Heaviside_step_function) where questions within the 4096 context window are answered with probability P and the others are answered with a lower probability P'. This doesn't seem to be happening - something else is causing the ~linear decrease in probability with distance within the 4096 sliding window.
 
@@ -102,7 +102,7 @@ However, since the attention between two tokens in a sequence is scaled by their
 
 For a simpler derivation, consider that tokens are represented in a 2d embedding space. To apply positional embedding, the token embeddings are rotated by some angle $$\theta = i\delta$$ where $$i$$ denotes the positon of the token in the sequence. It is clear that the dot-product between two _similar_ embeddings spaced N tokens apart will scale by approximately $$\cos(N\delta)$$.
 
-![sliding window attention with RoPE](images/rope/sliding-window-with-rope.webp)
+![sliding window attention with RoPE]({{ site.baseurl }}/images/rope/sliding-window-with-rope.webp)
 
 This $$\cos(N\delta)$$ decrease might explain the decrease within the 4096 sliding window.
 
