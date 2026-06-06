@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Writing an LLM from 'scratch' - Part 1: Attention"
+title: "How LLMs Work - Part 1: Attention"
 date: 2026-06-06
 categories: machine learning
 ---
