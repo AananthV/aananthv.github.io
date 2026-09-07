@@ -8,3 +8,7 @@ gem "minima", "~> 2.5"
 
 # Required for local previewing on Ruby 3.0+ (as webrick is no longer in the standard library)
 gem "webrick", group: :jekyll_plugins
+
+# Ruby 3.4+ no longer bundles CSV in the standard library.
+gem "csv"
+gem "bigdecimal"

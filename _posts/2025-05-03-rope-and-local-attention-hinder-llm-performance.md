@@ -3,6 +3,7 @@ layout: post
 title: "RoPE and Local Attention hinder LLM performance"
 date: 2025-05-03
 categories: machine learning
+description: "An experiment on why answer quality falls across long prompts — and what local attention and rotary embeddings may have to do with it."
 ---
 
 ### The probability of answering a list of questions

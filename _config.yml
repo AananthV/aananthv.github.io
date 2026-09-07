@@ -1,9 +1,9 @@
 # Site settings
-title: Aananth's Blog
-email: aananthv@github.io
+title: Aananth V
+email: aananthv@utexas.edu
 description: >- # this means to ignore newlines until "baseurl:"
-  Welcome to my personal blog. Here I share my thoughts, projects, and experiences
-  working with technology, code, and everything in between.
+  Software engineer and computer science master's student writing about systems,
+  networking, machine learning, and the ideas underneath them.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://aananthv.github.io" # the base hostname & protocol for your site
 
