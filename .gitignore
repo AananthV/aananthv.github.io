@@ -6,3 +6,4 @@ vendor/bundle/
 vendor/cache/
 .bundle/
 Gemfile.lock
+.DS_Store
