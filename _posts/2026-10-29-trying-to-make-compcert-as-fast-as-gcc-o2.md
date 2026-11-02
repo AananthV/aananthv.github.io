@@ -186,7 +186,7 @@ description: "What happens when you spend 15,000 lines of verified Rocq trying t
 .asm-num     { color: #0086b3; }
 </style>
 
-CompCert ([Github Repository](https://github.com/AbsInt/CompCert/blob/master/driver/Compiler.v)) is a *formally verified* C compiler written in Rocq and OCaml. You feed a C program into the front end, and it transforms the program through a sequence of optimizations and intermediate representations all the way down to x86-64 assembly code. Each of these transformations, also called passes in compiler jargon, are implemented and formally verified in Rocq. At the end, a machine-checked theorem ensures that the emitted assembly code has the same behavior as the source C program. This makes CompCert particularly suitable for safety-critical software where correctness is just as important as performance.
+CompCert ([GitHub](https://github.com/AbsInt/CompCert)) is a *formally verified* C compiler written in Rocq and OCaml. You feed a C program into the front end, and it transforms the program through a sequence of optimizations and intermediate representations all the way down to x86-64 assembly code. Each of these transformations, also called passes in compiler jargon, are implemented and formally verified in Rocq. At the end, a machine-checked theorem ensures that the emitted assembly code has the same behavior as the source C program. This makes CompCert particularly suitable for safety-critical software where correctness is just as important as performance.
 
 However, formal verification currently comes with a steep runtime tax. For example, the programs in CompCert 3.18's `test/c` benchmark suite run roughly 28% slower than when compiled by `gcc -O2`. The PolyBench loop-nest benchmarks are even slower, running about 55% slower than `gcc -O2`. Note: We used an Intel Xeon 4314 CPU for this and the other experiments in this post.
 
@@ -237,7 +237,7 @@ We first needed to know which missing transformations actually contribute to the
 
 The following are some of the missing optimizations we found this way:
 
-### Loop-Carried Reloads in [`spectral`](https://github.com/AbsInt/CompCert-small-tests/blob/main/c/spectral.c)
+### Loop-Carried Reloads in `spectral`
 
 In [`spectral`](https://github.com/AbsInt/CompCert-small-tests/blob/main/c/spectral.c), the hot `eval_A_times_u` inner loop accumulates products into an array element `Au[i]`:
 
@@ -270,7 +270,7 @@ Simply using a temporary register to accumulate the sum across loop iterations c
 
 This transformation could be realized by applying *loop-invariant code motion* (LICM) and *loop rotation*. Together, they hoist the initial array load into a dedicated loop preheader and sink the final store outside the loop.
 
-### Over-Conservative Stack Aliasing in [`sha3`](https://github.com/AbsInt/CompCert-small-tests/blob/main/c/sha3.c)
+### Over-Conservative Stack Aliasing in `sha3`
 
 In [`sha3`](https://github.com/AbsInt/CompCert-small-tests/blob/main/c/sha3.c), the hot `keccakf` permutation writes temporary values into a local stack array `bc[5]`:
 
@@ -309,11 +309,11 @@ movl    %edx, %edx              # redundant! 32-bit shift already zeroes upper 3
 movl    0(%r9,%rdx,4), %r10d    # load 32-bit word from lookup table Te0
 ```
 
-That added 34 useless instructions to every encryption round. Just removing these instructions cut `aes` runtime from ~84 ms down to ~76 ms (a 9% speedup). Along with LICM, we were able to reach ~67 ms (a 21% speedup). This was slightly faster than gcc -O2.
+That added 34 useless instructions to every encryption round. Just removing these instructions cut `aes` runtime from ~84 ms down to ~76 ms (a 9% speedup). Along with LICM, we were able to reach ~67 ms (a 21% speedup). This was slightly faster than `gcc -O2`.
 
 Second, we found a suboptimal lowering in CompCert's emission of scalar SSE instructions like `cvtsi2sd` and `sqrtsd`. While these instructions write only the lower 64 bits, the hardware considers the full 128 bits of the `%xmm` register when executing and must keep the upper bits intact. These upper bits are never used in scalar code (no SIMD). This creates a false read-after-write dependency where the CPU waits for the previous write to that register to complete, stalling the instruction pipeline.
 
-Both GCC and Clang fix this by emitting `xorpd %xmm, %xmm` first ([LLVM even has a dedicated pass, `BreakFalseDeps.cpp`, for this](https://github.com/llvm/llvm-project/blob/main/llvm/lib/CodeGen/BreakFalseDeps.cpp); see also this [Stack Overflow breakdown](https://stackoverflow.com/questions/60688348/why-does-adding-an-xorps-instruction-make-this-function-using-cvtsi2ss-and-addss) for a more detailed explanation). Modern x86 processors recognize xor-with-self as a zero-execution-cycle instruction in the register renamer and break the false dependency at no additional cost:
+Both GCC and Clang fix this by emitting `xorpd %xmm, %xmm` first (see LLVM's [`BreakFalseDeps.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/CodeGen/BreakFalseDeps.cpp) and this [Stack Overflow breakdown](https://stackoverflow.com/questions/60688348/why-does-adding-an-xorps-instruction-make-this-function-using-cvtsi2ss-and-addss) for more details). Modern x86 processors recognize xor-with-self as a zero-execution-cycle instruction in the register renamer and break the false dependency at no additional cost:
 
 ```asm
 # Upstream CompCert 3.18 (184 ms): false dependency on old %xmm3 contents
@@ -330,7 +330,7 @@ This results in a 40% speedup for [`nbody`](https://github.com/AbsInt/CompCert-s
 
 ---
 
-## 3. How Compcert Proves Compiler Passes
+## 3. How CompCert Proves Compiler Passes
 
 Before asking AI agents to write new transformations, let's try to understand how CompCert proves that the transformations are correct. Every pass in CompCert comes with a mathematical proof written in Rocq that proves that the transformed code behaves identically to the original program. There are two fundamentally different approaches that CompCert uses, and each comes with distinct engineering trade-offs.
 
@@ -370,9 +370,9 @@ When you compile a C program, CompCert runs the validator to guarantee that the 
 
 ## 4. Scaling Verified Passes with Coding Agents
 
-Once identified which passes we needed to implement (Section 2), we used coding agents to scale the generation and verification of optimization passes. Each optimization was assigned to an agent in an isolated git worktree. Every change made by the agent had to compile cleanly across all target architectures and pass CompCert's regression test suite. The proofs also had to introduce zero `Admitted` proofs or unapproved `Axiom` declarations.
+Once we identified which passes we needed to implement ([Section 2](#2-assembly-surgery-so-where-does-the-time-actually-go)), we used coding agents to scale the generation and verification of optimization passes. Each optimization was assigned to an agent in an isolated git worktree. Every change made by the agent had to compile cleanly across all target architectures and pass CompCert's regression test suite. The proofs also had to introduce zero `Admitted` proofs or unapproved `Axiom` declarations.
 
-While Rocq verifies that the transformations themselves are mathematically sound, it cannot verify changes to the hardware model. If an agent incorrectly alters the definition of an x86 instruction, Rocq will still accept the proof, but the compiler will emit broken machine code. Due to this, agents were barred from modifying the **trusted computing base** (C semantics, x86 assembly instructions, and the memory model) without explicit human approval. Unfortunately, the monkey in the loop (me) also approved incorrect changes to the hardware model, but we'll go over that in section 6.
+While Rocq verifies that the transformations themselves are mathematically sound, it cannot verify changes to the hardware model. If an agent incorrectly alters the definition of an x86 instruction, Rocq will still accept the proof, but the compiler will emit broken machine code. Due to this, agents were barred from modifying the **trusted computing base** (C semantics, x86 assembly instructions, and the memory model) without explicit human approval. Unfortunately, the monkey in the loop (me) also approved incorrect changes to the hardware model, but we'll go over that in [Section 6](#6-the-human-gate-when-proofs-cannot-save-you).
 
 We implemented 5 new passes as well as improvements to existing passes:
 
@@ -549,7 +549,7 @@ If we view the same data relative to full `gcc -O2` (`1.00x` = `gcc -O2`), the p
 
 While we have made significant progress in closing the performance gap in this pilot, there is still a long way to go. The gap between the `test/c` suite and the held-out `big` programs reflects where we focused our optimization effort (and token spend). We focused on low hanging fruit like loop-level optimizations inside individual functions. That strategy works well for small numerical kernels. But in larger programs like `spass` and `raytracer`, runtime was driven by function call overhead, pointer indirection, and memory layout. These are things we haven't even begun to address. 
 
-Closing the remaining gap to GCC -O2 requires moving beyond single-function scalar passes. The following are some examples of optimizations that we identified but did not implement. Token donations are welcome :)
+Closing the remaining gap to `gcc -O2` requires moving beyond single-function scalar passes. The following are some examples of optimizations that we identified but did not implement. Token donations are welcome :)
 
 ### 1. Coarse Alias Analysis and Loop-Invariant Loads
 
