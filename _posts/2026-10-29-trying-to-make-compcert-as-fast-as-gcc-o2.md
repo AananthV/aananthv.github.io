@@ -390,29 +390,25 @@ We implemented 5 new passes as well as improvements to existing passes:
 
 ## 5. From Isolated Wins to a Full Pipeline
 
-Getting Rocq to print `Closed under the global context` was rarely the bottleneck. Most passes took an agent a few hours and 10 to 40 compile-and-fix iterations. The real engineering challenges showed up after the proofs were done, when our changes met downstream compiler passes, held-out code, and real hardware.
+Writing Rocq proofs was usually straightforward. Using Opus 5.5 in Claude Code, most passes took a few hours and about 10 to 40 compile-and-fix iterations to complete. However, the work didn't stop there and some real challenges showed up after the proofs were done, with held-out code, with passes interacting with each other, and with real hardware.
 
 ### 1. Pass Interactions and the Case for Autotuning
 
-When we evaluated our first set of passes (tuned inlining, `Deadcode`/`CSE` alias improvements, x86 instruction selection, `Loadfwd`, and `LICM` with loop rotation), every single one made benchmarks faster in isolation.
+Every single pass we implemented made benchmarks faster in isolation. However, merging all of them into a single *static* pipeline revealed subtle interactions across passes. On some programs, combining all optimizations even made them slower than applying a small subset. We used `-fno-*` flags to pinpoint bad interactions, for example:
 
-However, merging all of them into a single static pipeline revealed subtle interactions across passes. On a few kernels, combining optimizations slightly blunted the overall gain (`0.889x` baseline runtime vs. `0.885x` with four passes).
-
-Ablating with `-fno-*` flags pinpointed two specific interference points:
 * In `sha3`, `Loadfwd` inserted shadow copies after memory operations. While `Deadcode` normally eliminated them, `CSE` used those shadow registers as canonical replacements, merging 27 distinct values and increasing register pressure until `keccakf` spilled to the stack.
 * In `nsieve`, rotating a loop copied the exit test to the bottom, turning an unconditional jump into a conditional branch. That disqualified the block from CompCert's latch-placement heuristic in `Linearizeaux.ml`, adding extra jumps on the hot path.
 
-We resolved both cases by refining the local heuristics. But this pattern points to a broader reality: no single fixed pass order or heuristic threshold is optimal across every codebase.
-
-In verified compilers, where soundness is mathematically guaranteed by Rocq, pass interactions make a strong case for **profile-driven and agentic autotuning**. Because translation validation safely rejects invalid candidate rewrites at compile time, an external tuner or agent can aggressively explore optimization flags, inlining budgets, and pass ordering for a target program without any risk of miscompilation.
+While we were able to resolve both cases by refining local heuristics, this pattern points to a broader reality: no single fixed pass order or heuristic is optimal across all codebases. Pass interactions like these make a strong case for **profile-driven autotuning** and/or **agentic optimization**. This is especially true for *verified compilers* since each optimization pass is guaranteed to be correct (or no-op) - so we only need to worry about the interactions! This is very different from traditional compilers where the wrong order of passes might not only be suboptimal but could also introduce bugs.
 
 ### 2. Evaluating Beyond `test/c`: PolyBench and Larger Programs
 
-After addressing those initial interactions, Round 1 reached `0.871x` CompCert 3.18 runtime on the 24 benchmarks in `test/c`. That beat `gcc -O1` (`0.891x`) and closed 60% of the gap to `gcc-O2-ccmodel` (`0.794x`).
+After addressing the initial interactions, we were able to beat `gcc -O1` and achieve `0.871x` the baseline CompCert 3.18 runtime on the `test/c` suite. This closed 60% of the gap to `gcc-O2-ccmodel` (`0.794x`).
 
-To test whether these speedups generalized beyond the 24 programs in `test/c`, we evaluated the compiler on two held-out suites that played zero role in tuning: `big` (five larger programs: `raytracer`, `spass`, `arcode`, `lzw`, and `lzss`) and `polybench` (all 30 loop-nest kernels from PolyBench/C 4.2.1).
+To test whether these speedups generalized beyond `test/c`, we evaluated the compiler on two held-out suites: `big` (five larger programs: `raytracer`, `spass`, `arcode`, `lzw`, and `lzss`) and `polybench` (all 30 loop-nest kernels from PolyBench/C 4.2.1). The results were modest and both lagged behind `gcc -O1`.
 
-The initial results showed clear limits to the Round 1 passes. On `big`, the speedup was modest (`0.982x`). On `polybench`, the compiler reached `0.845x`, trailing `gcc -O1` (`0.739x`).
+- On `big`, the compiler reached `0.982x` of baseline (vs `0.834x` for `gcc -O1`).
+- On `polybench`, the compiler reached `0.845x` of baseline (vs `0.739x` for `gcc -O1`).
 
 Inspecting the assembly of [`gemm`](https://github.com/MatthiasJReisinger/PolyBenchC-4.2.1/blob/master/linear-algebra/blas/gemm/gemm.c) (`C[i][j] += alpha * A[i][k] * B[k][j]`) showed immediately why PolyBench was still slow. Our compiler executed 21 instructions in the inner loop, while `gcc -O1` executed 8:
 
@@ -465,9 +461,7 @@ We extended `LICM.v` to hoist dependent chains of invariant operations, and we b
 
 ## 6. The Human Gate: When Proofs Cannot Save You
 
-In a verified compiler, middle-end passes are gated by Rocq. If an agent makes a mistake in `Loadfwd` or `LICM`, `make proof` rejects it.
-
-However, that safety net vanishes the moment you touch the **trusted base**: the C semantics, the memory model (`common/Memory.v`), the x86 assembly semantics (`x86/Asm.v`), or the unverified OCaml target printer (`x86/TargetPrinter.ml`). A wrong assumption in the trusted base silently voids the correctness theorem while Rocq happily reports `Qed`.
+In CompCert, the transformations are formally verified using Rocq. If an agent makes a mistake in the transformations, say `Loadfwd` or `LICM`, `make proof` will reject it. However, that safety net vanishes the moment we touch the **trusted base**: the C semantics, the memory model, the x86 assembly semantics, or the target printer. A wrong assumption in the trusted base invalidates the correctness guarantee while Rocq happily reports `Qed`.
 
 Even with our rule requiring human sign-off on trusted files, **twice I approved a trusted-base proposal that turned out to be mathematically false**.
 
@@ -499,15 +493,11 @@ Because the agent was instructed to halt rather than improvise around a trusted-
 
 > **Lesson from the Human Gate:** Human sign-off on formal specifications is necessary, but human intuition alone is not reliable enough. After Issue #13, we changed our process: every trusted-base proposal had to be mechanically prototyped in a scratch branch (with the key soundness lemma proved and zero admits) *and* differentially tested against the real CPU or glibc before coming to me for approval.
 
-Every single trusted-base addition was backed by massive differential tests. First, our x86 differential testing harness extracts the Coq semantics of our 17 new or refined x86 instructions (memory-operand arithmetic, zero-extending loads and shifts, shift-count masking, and unaligned `movq`) to OCaml. It compares them bit for bit against the real CPU across hundreds of thousands of edge cases, including NaN payloads, denormals, page-boundary crossings, and garbage in high register bits. It found 0 mismatches. Second, our math library differential harness tests our opt-in `-ftrust-libm` flag (which turns `sqrt`/`fabs` into exact IEEE builtins and treats 50 `libm` functions like `floor`, `sin`, and `exp` as pure runtime functions for CSE) against glibc 2.35 across **2.4 billion calls**, again with 0 mismatches.
-
 ---
 
 ## 7. Where Performance Stands Today
 
-Near the end of the project, we also fixed a subtle measurement bug. Earlier runs timed each compiler configuration sequentially on a shared machine, so a burst of background load from another user could penalize whichever compiler happened to be running. Updating our benchmark runner to interleave configurations round-robin for each program reduced run-to-run drift on identical binaries to under 0.4%.
-
-Here is where `faster-compcert` stands on a quiet machine with interleaved timing, expressed as geometric mean runtime relative to upstream CompCert 3.18 (lower is faster):
+Here is where `faster-compcert` stands on a quiet machine, expressed as geometric mean runtime relative to upstream CompCert 3.18 (lower is faster):
 
 | Compiler configuration | `test/c` (24 progs, tuned) | `big` (5 progs, held out) | `PolyBench` (30 kernels, held out) |
 |---|---:|---:|---:|
@@ -555,33 +545,43 @@ If we view the same data relative to full `gcc -O2` (`1.00x` = `gcc -O2`), the p
 
 ---
 
-## 8. What Still Blocks Us from Matching GCC -O2 (and -O3)
+## 8. What Still Blocks Us from Matching GCC -O2
 
-The difference between our PolyBench results (72% of the gap closed) and our held-out `big` program results (33% of the gap closed) points to the exact limits of what local RTL and peephole passes can do.
+While we have made significant progress in closing the performance gap in this pilot, there is still a long way to go. The gap between the `test/c` suite and the held-out `big` programs reflects where we focused our optimization effort (and token spend). We focused on low hanging fruit like loop-level optimizations inside individual functions. That strategy works well for small numerical kernels. But in larger programs like `spass` and `raytracer`, runtime was driven by function call overhead, pointer indirection, and memory layout. These are things we haven't even begun to address. 
 
-In loop-nest kernels like `gemm`, `2mm`, `3mm`, and `trisolv`, performance is governed by inner-loop address arithmetic, invariant computations, and loop-carried accumulators in registers. `Loadfwd`, `LICM`, and `IVwiden` attack those patterns directly. What still keeps `gemm` 13% behind `gcc -O2` is loop-invariant *load* hoisting. In `C[i][j] += alpha * A[i][k] * B[k][j]`, CompCert still reloads `A[i][k]` on every `j` iteration because its alias analysis cannot prove that the pointer `C` does not overlap the pointer `A`.
+Closing the remaining gap to GCC -O2 requires moving beyond single-function scalar passes. The following are some examples of optimizations that we identified but did not implement. Token donations are welcome :)
 
-In call-heavy, pointer-chasing programs like `spass`, `raytracer`, and `arcode`, the bottlenecks are structural.
+### 1. Coarse Alias Analysis and Loop-Invariant Loads
 
-First, CompCert has no interprocedural register allocation (IPA-RA). The calling convention is baked into the LTL, Mach, and Asm semantics, so every function call clobbers all caller-save registers even when the callee touches only two registers.
+In loop nests like `gemm` (`C[i][j] += alpha * A[i][k] * B[k][j]`), `faster-compcert` still trails `gcc -O2` by 13% due to missing loop-invariant load hoisting. In the inner `j` loop, the value `A[i][k]` never changes. GCC hoists it once into a register before the loop starts. But CompCert currently lacks heap points-to analysis, so it cannot prove that storing into `C[i][j]` leaves `A[i][k]` untouched. Consequently, CompCert reloads `A[i][k]` from memory on every single iteration.
 
-Second, pointer alias analysis is coarse. CompCert's value analysis distinguishes stack blocks from global blocks and checks disjoint constant offsets, but it has no general points-to analysis for heap structures.
+**What it will take:** Either a verified points-to analysis for the heap, or translation validation for C99 `restrict` annotations so the compiler can prove the arrays do not overlap.
 
-Third, stack frames carry a memory back-link. CompCert's `Pfreeframe` instruction restores `%rsp` by loading a back-link from memory rather than adding the known frame size `sz` to `%rsp`, which adds memory traffic to small non-inlined functions.
+### 2. Interprocedural Register Allocation (IPA-RA)
 
-Fourth, `x86/Asm.v` has no SIMD vector instructions. Looking beyond `-O2`, `gcc -O3` pulls another 10% ahead on PolyBench through auto-vectorization. Matching that in CompCert will require extending `x86/Asm.v` with 128-bit and 256-bit vector registers and building a translation-validated loop or SLP vectorizer.
+In call-heavy code like `spass` and `arcode`, functions call other functions constantly. CompCert compiles one function at a time. When a function executes a `call` instruction, it assumes all caller-saved registers are wiped out. Even if a small callee function touches only two registers, the caller still saves its own live variables to stack memory beforehand and reloads them afterward.
+
+**What it will take:** Whole-program analysis across the compilation unit, letting the compiler customize calling conventions so callers only save registers the callee actually touches.
+
+### 3. Stack Frame Back-Links
+
+On x86-64, an optimized function return simply adds a constant offset to the stack pointer (`addq $sz, %rsp; ret`).
+
+CompCert instead implements its stack frame teardown (`Pfreeframe`) by reading a stored back-link from memory. Small, non-inlined functions that could otherwise run entirely in CPU registers are forced to round-trip stack pointers through memory on every return.
+
+**What it will take:** Either more aggressive inlining to remove the frame altogether, or refactoring `Mach` and `Asm` frame emission to replace the memory read with a constant `addq` offset.
 
 ---
 
 ## 9. Takeaways
 
-We started with two questions: why is CompCert slower than `gcc -O2`, and can LLM agents close the gap without compromising the proof?
+We started with two questions: why is CompCert slower than `gcc -O2`, and can LLM agents close the gap?
 
-First, CompCert's formal semantics of C and x86-64 are not what make it slow. Almost all of the gap between CompCert and `gcc -O2` comes from missing middle-end passes (load forwarding, loop-invariant code motion, induction-variable strength reduction) and backend instruction selection details.
+First, CompCert's formal models are not the primary reason for it being slow. Almost all of the gap between CompCert and `gcc -O2` comes from missing optimization passes and suboptimal instruction selection.
 
-Second, LLM agents can write and prove serious compiler optimizations at scale. Writing nearly 15,000 lines of Rocq proofs across `Loadfwd`, `LICM`, `IVwiden`, `Tailacc`, and `Loadop` was fast and reliable, especially when we paired untrusted OCaml oracles with small verified Rocq validators. Classical performance engineering (catching negative pass interactions, preventing quadratic compile-time blow-ups, checking for overfitting with held-out suites, and fixing shared-machine timing noise) was much harder than getting `make proof` to pass.
+Second, LLM agents can write and prove serious compiler optimizations at scale with minimal human supervision. Writing nearly 15,000 lines of Rocq proofs across `Loadfwd`, `LICM`, `IVwiden`, `Tailacc`, and `Loadop` was fast and reliable. Classical performance engineering (catching negative pass interactions, preventing quadratic compile-time blow-ups, checking for overfitting with held-out suites, and fixing shared-machine timing noise) involved more human input than proof engineering.
 
-Finally, formal verification does not replace human judgment at the boundary between the model and the real world. Agents did the diagnosis, the coding, the proof repair, and 2.4 billion differential tests. A human was still needed for the three questions a theorem prover can never answer: what to trust, what to make default, and what is actually worth building.
+Finally, formal verification works only when the model of the real system is accurate. Agents automate traditionally difficult parts of the job like pass-building and proof generation, but human guardrails are still needed for defining the scope of the system and verifying that the model is accurate. Methods like differential testing can help bridge this gap in the future to further reduce the human effort required.
 
 <script>
 // --- Figure 1 Data ---
