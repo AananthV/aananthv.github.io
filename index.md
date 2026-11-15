@@ -7,6 +7,7 @@ external_posts:
     description: "What happens when you spend 15,000 lines of verified Rocq trying to close the 28% performance gap between CompCert 3.18 and GCC -O2."
     url: https://ut-infraai.github.io/2026/11/13/trying-to-make-compcert-as-fast-as-gcc-o2/
     external_source: UT InfraAI
+    external_source_icon: /images/writing/infraai-center.webp # Favicon from infraai.center
     thumbnail: /images/writing/compcert.webp
 ---
 
@@ -112,7 +113,12 @@ external_posts:
             <div class="post-item__meta">
               <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %Y" }}</time>
               {%- if post.external_source %}
-                <span><span aria-hidden="true">·&nbsp;</span> {{ post.external_source | escape }}</span>
+                <span class="post-item__source">
+                  {%- if post.external_source_icon %}
+                    <img src="{{ post.external_source_icon | relative_url | escape }}" width="16" height="16" alt="">
+                  {%- endif %}
+                  {{ post.external_source | escape }}
+                </span>
               {%- endif %}
             </div>
             <h3>

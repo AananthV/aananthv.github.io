@@ -195,10 +195,17 @@ section[id] { scroll-margin-top: 120px; }
 .post-item__meta {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 7px;
+  align-items: center;
+  column-gap: 12px;
   margin-bottom: 5px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.post-item__source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .post-item__external {
