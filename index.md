@@ -99,7 +99,8 @@ title: Home
   <div class="post-list">
     {%- for post in site.posts -%}
       <article class="post-item">
-        <a href="{{ post.url | relative_url }}">
+        {%- assign post_url = post.url | relative_url -%}
+        <a href="{{ post.redirect_to | default: post_url | escape }}">
           <div>
             <h3>{{ post.title | escape }}</h3>
             <p>{{ post.description | default: post.excerpt | strip_html | truncatewords: 24 }}</p>
