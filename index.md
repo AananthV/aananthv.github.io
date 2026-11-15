@@ -1,6 +1,11 @@
 ---
 layout: default
 title: Home
+external_posts:
+  - title: "Trying to Make CompCert as Fast as GCC -O2"
+    date: 2026-11-13 00:00:00 -06:00
+    description: "What happens when you spend 15,000 lines of verified Rocq trying to close the 28% performance gap between CompCert 3.18 and GCC -O2."
+    url: https://ut-infraai.github.io/2026/11/13/trying-to-make-compcert-as-fast-as-gcc-o2/
 ---
 
 <section class="intro" aria-labelledby="intro-title">
@@ -97,10 +102,10 @@ title: Home
 <section class="writing" id="writing" aria-labelledby="writing-title">
   <h2 id="writing-title">Writing</h2>
   <div class="post-list">
-    {%- for post in site.posts -%}
+    {%- assign writing = site.posts | concat: page.external_posts | sort: 'date' | reverse -%}
+    {%- for post in writing -%}
       <article class="post-item">
-        {%- assign post_url = post.url | relative_url -%}
-        <a href="{{ post.redirect_to | default: post_url | escape }}">
+        <a href="{{ post.url | relative_url | escape }}">
           <div>
             <h3>{{ post.title | escape }}</h3>
             <p>{{ post.description | default: post.excerpt | strip_html | truncatewords: 24 }}</p>
