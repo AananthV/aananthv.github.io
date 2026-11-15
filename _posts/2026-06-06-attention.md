@@ -4,6 +4,7 @@ title: "How LLMs Work - Part 1: Attention"
 date: 2026-06-06
 categories: machine learning
 description: "A from-first-principles derivation of attention, queries, keys, values, and the mechanism at the heart of modern language models."
+thumbnail: /images/writing/attention.webp
 ---
 
 ## Writing an LLM from "scratch"

@@ -6,6 +6,8 @@ external_posts:
     date: 2026-11-13 00:00:00 -06:00
     description: "What happens when you spend 15,000 lines of verified Rocq trying to close the 28% performance gap between CompCert 3.18 and GCC -O2."
     url: https://ut-infraai.github.io/2026/11/13/trying-to-make-compcert-as-fast-as-gcc-o2/
+    external_source: UT InfraAI
+    thumbnail: /images/writing/compcert.webp
 ---
 
 <section class="intro" aria-labelledby="intro-title">
@@ -107,10 +109,18 @@ external_posts:
       <article class="post-item">
         <a href="{{ post.url | relative_url | escape }}">
           <div>
-            <h3>{{ post.title | escape }}</h3>
+            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %Y" }}</time>
+            <h3>
+              {{- post.title | escape -}}
+              {%- if post.external_source -%}
+                <span class="post-item__external" role="img" aria-label="External article on {{ post.external_source | escape }}">&#8239;↗</span>
+              {%- endif -%}
+            </h3>
             <p>{{ post.description | default: post.excerpt | strip_html | truncatewords: 24 }}</p>
           </div>
-          <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %Y" }}</time>
+          {%- if post.thumbnail %}
+            <img class="post-item__thumbnail" src="{{ post.thumbnail | relative_url | escape }}" width="384" height="240" alt="" loading="lazy">
+          {%- endif %}
         </a>
       </article>
     {%- endfor -%}
