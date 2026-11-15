@@ -109,11 +109,16 @@ external_posts:
       <article class="post-item">
         <a href="{{ post.url | relative_url | escape }}">
           <div>
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %Y" }}</time>
+            <div class="post-item__meta">
+              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %Y" }}</time>
+              {%- if post.external_source %}
+                <span><span aria-hidden="true">·&nbsp;</span> {{ post.external_source | escape }}</span>
+              {%- endif %}
+            </div>
             <h3>
               {{- post.title | escape -}}
               {%- if post.external_source -%}
-                <span class="post-item__external" role="img" aria-label="External article on {{ post.external_source | escape }}">&#8239;↗</span>
+                <span class="post-item__external" role="img" aria-label="External link">&#8239;↗</span>
               {%- endif -%}
             </h3>
             <p>{{ post.description | default: post.excerpt | strip_html | truncatewords: 24 }}</p>

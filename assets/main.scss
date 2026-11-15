@@ -192,8 +192,10 @@ section[id] { scroll-margin-top: 120px; }
   line-height: 1.55;
 }
 
-.post-item time {
-  display: block;
+.post-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 7px;
   margin-bottom: 5px;
   color: var(--muted);
   font-size: 12px;
@@ -354,7 +356,7 @@ section[id] { scroll-margin-top: 120px; }
   .intro__tagline { font-size: 21px; }
   .portrait { float: right; width: 104px; height: 130px; margin: 0 0 14px 22px; }
   .post-item > a > div { display: contents; }
-  .post-item time, .post-item h3 { grid-column: 1; }
+  .post-item__meta, .post-item h3 { grid-column: 1; }
   .post-item h3 { font-size: 22px; }
   .post-item p { grid-column: 1 / -1; }
   .post-item__thumbnail { grid-row: 1 / 3; }
